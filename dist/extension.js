@@ -16,7 +16,41 @@ $parcel$export(module.exports, "deactivate", () => $955dca4fa1d7452b$export$e96c
  * Its main entrypoint is the {@link WebContainer} class.
  *
  * @packageDocumentation
- */ var $650c1378c4b8a985$var$__defProp = Object.defineProperty;
+ */ /**
+ * @internal
+ */ function $4ffe9be3a8d30190$export$fa8d2eb194a4a144(tree) {
+    const newTree = {
+        d: {}
+    };
+    for (const name of Object.keys(tree)){
+        const entry = tree[name];
+        if ("file" in entry) {
+            const contents = entry.file.contents;
+            const stringContents = typeof contents === "string" ? contents : $4ffe9be3a8d30190$var$binaryString(contents);
+            const binary = typeof contents === "string" ? {} : {
+                b: true
+            };
+            newTree.d[name] = {
+                f: {
+                    c: stringContents,
+                    ...binary
+                }
+            };
+            continue;
+        }
+        const newEntry = $4ffe9be3a8d30190$export$fa8d2eb194a4a144(entry.directory);
+        newTree.d[name] = newEntry;
+    }
+    return newTree;
+}
+function $4ffe9be3a8d30190$var$binaryString(bytes) {
+    let result = "";
+    for (const byte of bytes)result += String.fromCharCode(byte);
+    return result;
+}
+
+
+var $650c1378c4b8a985$var$__defProp = Object.defineProperty;
 var $650c1378c4b8a985$var$__export = (target, all)=>{
     for(var name in all)$650c1378c4b8a985$var$__defProp(target, name, {
         get: all[name],
@@ -36,7 +70,7 @@ $650c1378c4b8a985$var$__export($650c1378c4b8a985$export$4b579bfadaa62eeb, {
     windowEndpoint: ()=>$650c1378c4b8a985$var$windowEndpoint,
     wrap: ()=>$650c1378c4b8a985$var$wrap
 });
-// ../../node_modules/@blitz/comlink/dist/esm/comlink.mjs
+// ../../node_modules/comlink/dist/esm/comlink.mjs
 var $650c1378c4b8a985$var$proxyMarker = Symbol("Comlink.proxy");
 var $650c1378c4b8a985$var$createEndpoint = Symbol("Comlink.endpoint");
 var $650c1378c4b8a985$var$releaseProxy = Symbol("Comlink.releaseProxy");
@@ -313,40 +347,6 @@ function $650c1378c4b8a985$var$generateUUID() {
 }
 
 
-/**
- * @internal
- */ function $4ffe9be3a8d30190$export$fa8d2eb194a4a144(tree) {
-    const newTree = {
-        d: {}
-    };
-    for (const name of Object.keys(tree)){
-        const entry = tree[name];
-        if ("file" in entry) {
-            const contents = entry.file.contents;
-            const stringContents = typeof contents === "string" ? contents : $4ffe9be3a8d30190$var$binaryString(contents);
-            const binary = typeof contents === "string" ? {} : {
-                b: true
-            };
-            newTree.d[name] = {
-                f: {
-                    c: stringContents,
-                    ...binary
-                }
-            };
-            continue;
-        }
-        const newEntry = $4ffe9be3a8d30190$export$fa8d2eb194a4a144(entry.directory);
-        newTree.d[name] = newEntry;
-    }
-    return newTree;
-}
-function $4ffe9be3a8d30190$var$binaryString(bytes) {
-    let result = "";
-    for (const byte of bytes)result += String.fromCharCode(byte);
-    return result;
-}
-
-
 const $491bfa11b3f5ec61$var$DEFAULT_IFRAME_SOURCE = "https://stackblitz.com/headless";
 let $491bfa11b3f5ec61$var$bootPromise = null;
 let $491bfa11b3f5ec61$var$booted = false;
@@ -439,6 +439,7 @@ class $491bfa11b3f5ec61$export$c8f4191a001fed63 {
      * Boots a WebContainer. Only a single instance of WebContainer can be booted.
      */ static async boot(options = {}) {
         const { workdirName: workdirName  } = options;
+        if (window.crossOriginIsolated && options.coep === "none") console.warn(`A Cross-Origin-Embedder-Policy header is required in cross origin isolated environments.\nSet the 'coep' option to 'require-corp'.`);
         if (workdirName?.includes("/") || workdirName === ".." || workdirName === ".") throw new Error("workdirName should be a valid folder name");
         // try to "acquire the lock", i.e. wait for any ongoing boot request to finish
         while($491bfa11b3f5ec61$var$bootPromise)await $491bfa11b3f5ec61$var$bootPromise;
@@ -543,7 +544,7 @@ async function $491bfa11b3f5ec61$var$unsynchronizedBoot(options) {
     const server = await serverPromise;
     const instance = await server.build({
         host: window.location.host,
-        version: "1.1.0",
+        version: "1.1.5",
         workdirName: options.workdirName
     });
     const fs = await instance.fs();
@@ -566,7 +567,7 @@ function $491bfa11b3f5ec61$var$serverFactory(options) {
     iframe.style.display = "none";
     iframe.setAttribute("allow", "cross-origin-isolated");
     const url = $491bfa11b3f5ec61$var$getIframeUrl();
-    url.searchParams.set("version", "1.1.0");
+    url.searchParams.set("version", "1.1.5");
     if (options.coep) url.searchParams.set("coep", options.coep);
     iframe.src = url.toString();
     const { origin: origin  } = url;
@@ -603,31 +604,28 @@ function $491bfa11b3f5ec61$var$getIframeUrl() {
 
 
 class $3513642a54553ebc$var$WebContainerTerminal {
-    container = new (0, $491bfa11b3f5ec61$export$c8f4191a001fed63)();
-    emitter = new (0, $e2gKC$vscode.EventEmitter)();
-    line = "";
     close() {
         this.container.teardown();
     }
     open() {
         this.startShell();
     }
-    async fs(base, parent, result1, [name, type], index, array) {
-        if (type === (0, $e2gKC$vscode.FileType).File) result1[name] = {
+    async fs(base, parent, result, [name, type], index, array) {
+        if (type === (0, $e2gKC$vscode.FileType).File) result[name] = {
             file: {
                 contents: await (0, $e2gKC$vscode.workspace).fs.readFile(Uri.joinPath(base, ...parent, name))
             }
         };
         else if (type === (0, $e2gKC$vscode.FileType).Directory) {
             if (index !== undefined) parent.push(name);
-            result1[name] = {
+            result[name] = {
                 directory: {}
             };
-            await Promise.all((0, $e2gKC$vscode.workspace).fs.readDirectory(Uri.joinPath(base, ...parent)).then((data)=>data.reduce(this.fs.bind(this, base, parent.concat(name)), result1[name].directory)));
+            await Promise.all((0, $e2gKC$vscode.workspace).fs.readDirectory(Uri.joinPath(base, ...parent)).then((data)=>data.reduce(this.fs.bind(this, base, parent.concat(name)), result[name].directory)));
         }
     }
     async mount() {
-        result = {};
+        const result = {};
         for (const { uri: uri , name: name  } of (0, $e2gKC$vscode.workspace).workspaceFolders)await this.fs(uri, [], result, [
             name,
             (0, $e2gKC$vscode.FileType).Directory
@@ -635,11 +633,13 @@ class $3513642a54553ebc$var$WebContainerTerminal {
         await this.container.mount(result);
     }
     async handleInput(data) {
-        if (data === "\r" && this.input) {
-            this.input.write(this.line);
+        if (data === "\r" || data === "\n" && this.input) {
+            // Enter
+            // this.input.write(this.line);
             this.lines.push(this.line);
-            this.line = "";
-        } else if (data === "\x7f") {
+            this.line = "poop";
+        } else if (data === "\x7f") // Backspace
+        {
             if (line.length) {
                 this.line = this.line.slice(0, line.length - 1);
                 // Move cursor backward
@@ -649,7 +649,6 @@ class $3513642a54553ebc$var$WebContainerTerminal {
             }
         } else this.line += data;
     }
-    onDidWrite = this.emitter.event;
     async startShell() {
         await this.mount();
         const shellProcess = await container.spawn("jsh");
@@ -659,6 +658,12 @@ class $3513642a54553ebc$var$WebContainerTerminal {
             }
         }));
         this.input = shellProcess.input.getWriter();
+    }
+    constructor(){
+        this.container = new (0, $491bfa11b3f5ec61$export$c8f4191a001fed63)();
+        this.emitter = new (0, $e2gKC$vscode.EventEmitter)();
+        this.line = "";
+        this.onDidWrite = this.emitter.event;
     }
 }
 var $3513642a54553ebc$export$2e2bcd8739ae039 = $3513642a54553ebc$var$WebContainerTerminal;
